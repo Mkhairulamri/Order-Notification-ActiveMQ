@@ -6,7 +6,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class MailData {
-    private String mailFrom;
-    private String mailPassword;
-
+    ProductModel productModel;
+    CustomerModel customerModel;
+    OrderModel orderModel;
 }

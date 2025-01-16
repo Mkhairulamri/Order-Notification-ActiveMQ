@@ -39,7 +39,5 @@ public class EmailConn {
         Session session = Session.getDefaultInstance(props, auth);
         logger.info("Session created");
         return session;
-        
     }
-
 }
