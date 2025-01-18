@@ -1,23 +1,28 @@
 package com.example.order.order.Controller;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.order.order.Bean.getConnection;
 import com.example.order.order.Model.ExceptionHandle;
+import com.example.order.order.Model.OrderRequest;
 import com.example.order.order.Service.PubliserOrder;
 import com.example.order.order.Util.HandleException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.validation.Valid;
 
 @RestController
+@RequestMapping("/api")
+@Validated
 public class orderController {
 
     private static final Logger logger = LoggerFactory.getLogger(orderController.class);
@@ -29,11 +34,10 @@ public class orderController {
     PubliserOrder publiser = new PubliserOrder();
 
     @PostMapping("/subscibe-order")
-    public ResponseEntity<ExceptionHandle> subscibeOder(@RequestBody String param,
+    public ResponseEntity<ExceptionHandle> subscibeOder(@Valid @RequestBody OrderRequest orderRequest,
             @RequestHeader(value = "PARTNER-ID", required = false) String partnerId) {
         logger.info("Process Service Subscibe Order");
         ExceptionHandle result = new ExceptionHandle();
-        ObjectMapper mapper = new ObjectMapper();
 
         ExceptionHandle checkPartner = exceptions.checkPartner(partnerId);
 
@@ -41,26 +45,14 @@ public class orderController {
             if (!checkPartner.isStatus()) {
                 return new ResponseEntity<ExceptionHandle>(checkPartner, HttpStatus.FORBIDDEN);
             }
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> mapParam = mapper.readValue(param, Map.class);
-
-            @SuppressWarnings("unchecked")
-            ExceptionHandle checkData = exceptions.checkData((Map<String, Object>) mapParam.get("data"));
-
-            if (!checkData.isStatus()) {
-                return new ResponseEntity<>(checkData, HttpStatus.BAD_REQUEST);
+            if(getConnection.checkConnection()){
+                publiser.pushOrder(orderRequest);
+            }else{
+                result.setStatus(false);
+                result.setData(null);
+                result.setMessage("Internal Server Error");
+                return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);   
             }
-
-            @SuppressWarnings("unchecked")
-            ExceptionHandle checkOrder = exceptions.checkOrder((Map<String, Object>) mapParam.get("order"));
-
-            if (!checkOrder.isStatus()) {
-                return new ResponseEntity<>(checkOrder, HttpStatus.BAD_REQUEST);
-            }
-
-            mapParam.put("partnerId", partnerId);
-            publiser.pushOrder(mapParam);
 
             return new ResponseEntity<ExceptionHandle>(result, HttpStatus.OK);
         } catch (Exception e) {

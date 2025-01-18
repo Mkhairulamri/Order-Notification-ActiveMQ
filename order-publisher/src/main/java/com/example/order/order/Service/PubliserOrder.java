@@ -1,13 +1,12 @@
 package com.example.order.order.Service;
 
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.JmsException;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.order.order.Model.OrderRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,8 +22,8 @@ public class PubliserOrder {
     @Value("${spring.artemis.embedded.queues}")
     public String QueueDestination;
 
-    public void pushOrder(Map<String, Object> mapParam) throws JmsException, JsonProcessingException {
-        jmsTemplate.convertAndSend(QueueDestination, mapper.writeValueAsString(mapParam));
+    public void pushOrder(OrderRequest orderRequest) throws JmsException, JsonProcessingException {
+        jmsTemplate.convertAndSend(QueueDestination, mapper.writeValueAsString(orderRequest));
     }
 
 }
